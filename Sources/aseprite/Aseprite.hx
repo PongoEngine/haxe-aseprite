@@ -28,7 +28,6 @@ class Aseprite<Texture>
     }
 }
 
-@:allow(aseprite.Parser)
 class Frame<Texture>
 {
     public var duration (default, null) :Float;
