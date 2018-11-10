@@ -11,13 +11,7 @@ class Parser
     public static function parse<Texture>(bytes :Bytes) : Aseprite<Texture>
     {
         var reader = new Reader(bytes);
-        var header = readHeader(reader);
-        var frames = [for(i in 0...header.frames) readFrame(reader)];
-        return new Aseprite(header, frames);
-    }
 
-    static function readHeader(reader :Reader) : Header
-    {
         var fileSize :Int = reader.getDWord();
         var magicNumber :Int = reader.getWord();
         assert(magicNumber == 0xA5E0, "FILE NOT ASE");
@@ -36,10 +30,14 @@ class Parser
         var pixelHeight :Int = reader.getByte();
         reader.seek(92);
 
-        return new Header(frames, width, height, colorDepth, flags, transparentColor, numberOfColors, pixelWidth, pixelHeight);
+        var sprite = new Aseprite(width, height, colorDepth, transparentColor, numberOfColors, pixelWidth, pixelHeight);
+        for(i in 0...frames) {
+            sprite.frames.push(readFrame(sprite, reader));
+        }
+        return sprite;
     }
 
-    static function readFrame<Texture>(reader :Reader) : Frame<Texture>
+    static function readFrame<Texture>(sprite :Aseprite<Texture>, reader :Reader) : Frame<Texture>
     {
         var bytesLength :Int = reader.getDWord();
         var magicNumber :Int = reader.getWord();
@@ -53,13 +51,13 @@ class Parser
         var frame = new Frame(frameDuration/1000);
 
         for(i in 0...length) {
-            getChunk(frame, reader);
+            getChunk(sprite, frame, reader);
         }
 
         return frame;
     }
 
-    static function getChunk<Texture>(frame :Frame<Texture>, reader :Reader) : Void
+    static function getChunk<Texture>(sprite :Aseprite<Texture>, frame :Frame<Texture>, reader :Reader) : Void
     {
         var chunkSize = reader.getDWord();
         var chunkType :ChunkType = reader.getWord();
@@ -71,12 +69,12 @@ class Parser
                 assert(false, "CEL_EXTRA_CHUNK");
 
             case COLOR_PROFILE_CHUNK:
-                assert(frame.colorProfile == null, "frame profile is already set");
-                frame.colorProfile = readColorProfile(reader);
+                assert(sprite.colorProfile == null, "color profile is already set");
+                sprite.colorProfile = readColorProfile(reader);
 
             case FRAME_TAGS_CHUNK:
-                assert(frame.frameTags == null, "frame tags are already set");
-                frame.frameTags = readFrameTags(reader);
+                assert(sprite.frameTags == null, "frame tags are already set");
+                sprite.frameTags = readFrameTags(reader);
 
             case LAYER_CHUNK:
                 frame.layers.push(readLayer(reader));
@@ -88,8 +86,8 @@ class Parser
                 assert(false, "OLD_PALETTE_CHUNK_B");
 
             case PALETTE_CHUNK:
-                assert(frame.palette == null, "frame palette is already set");
-                frame.palette = readPalette(reader);
+                assert(sprite.palette == null, "palette is already set");
+                sprite.palette = readPalette(reader);
 
             case PATH_CHUNK: 
                 assert(false, "PATH_CHUNK");

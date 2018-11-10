@@ -1,40 +1,30 @@
 package aseprite;
 
+@:allow(aseprite.Parser)
 class Aseprite<Texture>
 {
-    public var header :Header;
-    public var frames :Array<Frame<Texture>>;
-
-    public function new(header :Header, frames :Array<Frame<Texture>>) : Void
-    {
-        this.header = header;
-        this.frames = frames;
-    }
-}
-
-class Header
-{
-    public var frames (default, null):Int;
     public var width (default, null):Int;
     public var height (default, null):Int;
     public var colorDepth (default, null):ColorDepth;
-    public var flags (default, null):Int;
     public var transparentColor (default, null):Int;
     public var numberOfColors (default, null):Int;
     public var pixelWidth (default, null):Int;
     public var pixelHeight (default, null):Int;
+    public var frameTags (default, null):Array<FrameTag>;
+    public var frames :Array<Frame<Texture>>;
+    public var colorProfile (default, null):ColorProfile;
+    public var palette (default, null):Palette;
 
-    public function new(frames :Int, width :Int, height :Int, colorDepth :Int, flags :Int, transparentColor :Int, numberOfColors :Int, pixelWidth :Int, pixelHeight :Int) : Void
+    public function new(width :Int, height :Int, colorDepth :Int, transparentColor :Int, numberOfColors :Int, pixelWidth :Int, pixelHeight :Int) : Void
     {
-        this.frames = frames;
         this.width = width;
         this.height = height;
         this.colorDepth = colorDepth;
-        this.flags = flags;
         this.transparentColor = transparentColor;
         this.numberOfColors = numberOfColors;
         this.pixelWidth = pixelWidth;
         this.pixelHeight = pixelHeight;
+        this.frames = [];
     }
 }
 
@@ -42,11 +32,8 @@ class Header
 class Frame<Texture>
 {
     public var duration (default, null) :Float;
-    public var colorProfile (default, null):ColorProfile;
-    public var palette (default, null):Palette;
     public var layers (default, null):Array<Layer>;
     public var cels (default, null):Array<Cel<Texture>>;
-    public var frameTags (default, null):Array<FrameTag>;
 
     public function new(duration :Float) : Void
     {
