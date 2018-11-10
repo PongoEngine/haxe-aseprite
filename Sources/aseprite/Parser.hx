@@ -20,9 +20,7 @@ class Parser
     {
         var fileSize :Int = reader.getDWord();
         var magicNumber :Int = reader.getWord();
-        if(magicNumber != 0xA5E0) {
-            throw "FILE NOT ASE";
-        }
+        assert(magicNumber == 0xA5E0, "FILE NOT ASE");
         var frames :Int = reader.getWord();
         var width :Int = reader.getWord();
         var height :Int = reader.getWord();
@@ -45,9 +43,7 @@ class Parser
     {
         var bytesLength :Int = reader.getDWord();
         var magicNumber :Int = reader.getWord();
-        if(magicNumber != 0xF1FA) {
-            throw "INCORRECT MAGIC NUMBER";
-        }
+        assert(magicNumber == 0xF1FA, "INCORRECT MAGIC NUMBER");
         var numberOfChunksOld :Int = reader.getWord();
         var frameDuration :Int = reader.getWord();
         reader.seek(2);
@@ -68,48 +64,37 @@ class Parser
         var chunkSize = reader.getDWord();
         var chunkType :ChunkType = reader.getWord();
         switch chunkType {
-            case CEL_CHUNK: {
+            case CEL_CHUNK:
                 frame.cels.push(readCel(reader));
-            }
 
-            case CEL_EXTRA_CHUNK: throw "CEL_EXTRA_CHUNK";
+            case CEL_EXTRA_CHUNK: assert(false, "CEL_EXTRA_CHUNK");
 
-            case COLOR_PROFILE_CHUNK: {
-                if(frame.colorProfile != null) {
-                    throw "frame profile is already set";
-                }
+            case COLOR_PROFILE_CHUNK:
+                assert(frame.colorProfile == null, "frame profile is already set");
                 frame.colorProfile = readColorProfile(reader);
-            }
 
-            case FRAME_TAGS_CHUNK: {
-                if(frame.frameTags != null) {
-                    throw "frame tags are already set";
-                }
+            case FRAME_TAGS_CHUNK:
+                assert(frame.frameTags == null, "frame tags are already set");
                 frame.frameTags = readFrameTags(reader);
-            }
 
-            case LAYER_CHUNK: {
+            case LAYER_CHUNK:
                 frame.layers.push(readLayer(reader));
-            }
 
             case OLD_PALETTE_CHUNK_A: readOldPaletteA(reader);
 
-            case OLD_PALETTE_CHUNK_B: throw "OLD_PALETTE_CHUNK_B";
+            case OLD_PALETTE_CHUNK_B: assert(false, "OLD_PALETTE_CHUNK_B");
 
-            case PALETTE_CHUNK:{
-                if(frame.palette != null) {
-                    throw "frame palette is already set";
-                }
+            case PALETTE_CHUNK:
+                assert(frame.palette == null, "frame palette is already set");
                 frame.palette = readPalette(reader);
-            }
 
-            case PATH_CHUNK: throw "PATH_CHUNK";
+            case PATH_CHUNK: assert(false, "PATH_CHUNK");
 
-            case SLICE_CHUNK: throw "SLICE_CHUNK";
+            case SLICE_CHUNK: assert(false, "SLICE_CHUNK");
 
-            case USER_DATA_CHUNK: throw "USER_DATA_CHUNK";
+            case USER_DATA_CHUNK: assert(false, "USER_DATA_CHUNK");
 
-            case _: throw ("CHUNK NOT FOUND: " + chunkType);
+            case _: assert(false, "CHUNK NOT FOUND: " + chunkType);
         }
     }
 
@@ -232,6 +217,11 @@ class Parser
         }
 
         return frameTags;
+    }
+
+    static function assert(that :Bool, msg :String) : Void
+    {
+        if(!that) throw msg;
     }
 }
 
