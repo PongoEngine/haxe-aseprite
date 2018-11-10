@@ -1,7 +1,5 @@
 package aseprite;
 
-// import aseprite.Parser;
-
 class Aseprite<Texture>
 {
     public var header :Header;
