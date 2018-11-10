@@ -4,6 +4,7 @@ import aseprite.Reader;
 import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.zip.InflateImpl;
+import aseprite.Aseprite;
 
 class Parser
 {
@@ -37,18 +38,7 @@ class Parser
         var pixelHeight :Int = reader.getByte();
         reader.seek(92);
 
-        return {
-            fileSize: fileSize,
-            frames: frames,
-            width: width,
-            height: height,
-            colorDepth: colorDepth,
-            flags: flags,
-            transparentColor: transparentColor,
-            numberOfColors: numberOfColors,
-            pixelWidth: pixelWidth,
-            pixelHeight: pixelHeight
-        };
+        return new Header(frames, width, height, colorDepth, flags, transparentColor, numberOfColors, pixelWidth, pixelHeight);
     }
 
     static function readFrame(reader :Reader) : Frame
@@ -245,94 +235,6 @@ class Parser
     }
 }
 
-@:allow(aseprite.Parser)
-class Frame
-{
-    public var duration (default, null) :Int;
-    public var colorProfile (default, null):ColorProfile;
-    public var palette (default, null):Palette;
-    public var layers (default, null):Array<Layer>;
-    public var cels (default, null):Array<Cel>;
-    public var frameTags (default, null):Array<FrameTag>;
-
-    public function new(duration :Int) : Void
-    {
-        this.duration = duration;
-        this.layers = [];
-        this.cels = [];
-    }
-}
-
-typedef Header =
-{
-    var fileSize :Int;
-    var frames :Int;
-    var width :Int;
-    var height :Int;
-    var colorDepth :ColorDepth;
-    var flags :Int;
-    var transparentColor :Int;
-    var numberOfColors :Int;
-    var pixelWidth :Int;
-    var pixelHeight :Int;
-}
-
-typedef FrameTag =
-{
-    var fromFrame :Int;
-    var toFrame :Int;
-    var direction :Direction;
-    var colors :Array<Int>;
-    var name :String;
-}
-
-typedef ColorProfile =
-{
-    var type :ColorProfileType;
-    var flags :Int;
-    var gamma :Float;
-    var iccData :Array<Int>;
-}
-
-typedef Palette =
-{
-    var firstColorIndex :Int;
-    var lastColorIndex :Int;
-    var colors :Array<PaletteColor>;
-}
-
-typedef Layer =
-{
-    var flags :Int;
-    var type :LayerType;
-    var childLevel :Int;
-    var blendMode :AseBlendmode;
-    var opacity :Int;
-    var name :String;
-}
-
-typedef Cel =
-{
-    var layerIndex :Int;
-    var x :Int;
-    var y :Int;
-    var opacityLevel :Int;
-    var data :CelData;
-}
-
-enum CelData {
-    RAW_DATA(width :Int, height :Int, pixels :Int);
-    LINKED_DATA(linkedFramePosition :Int);
-    IMAGE_DATA(width :Int, height :Int, data :haxe.io.Bytes);
-}
-
-enum PaletteColor
-{
-    NAMED_RGBA(name :String, r :Int, g :Int, b :Int, a :Int);
-    RGBA(r :Int, g :Int, b :Int, a :Int);
-    RGB(r :Int, g :Int, b :Int);
-}
-
 typedef Packet =
 {
     var entriesToSkip :Int;
@@ -354,67 +256,4 @@ abstract ChunkType(Int) from Int
     var PALETTE_CHUNK = 0x2019;
     var USER_DATA_CHUNK = 0x2020;
     var SLICE_CHUNK = 0x2022;
-}
-
-@:enum
-abstract ColorProfileType(Int) from Int
-{
-    var NO_COLOR_PROFILE = 0;
-    var SRGB = 1;
-    var ICC = 2;
-}
-
-@:enum
-abstract ColorDepth(Int) from Int
-{
-    var DEPTH_INDEXED = 8;
-    var DEPTH_GRAYSCALE = 16;
-    var DEPTH_RGBA = 32;
-}
-
-@:enum 
-abstract CelType(Int) from Int
-{
-    var RAW = 0;
-    var LINKED = 1;
-    var COMPRESSED_IMAGE = 2;
-}
-
-@:enum 
-abstract Direction(Int) from Int
-{
-    var FORWARD = 0;
-    var REVERSE = 1;
-    var PING_PONG = 2;
-}
-
-@:enum
-abstract LayerType(Int) from Int
-{
-    var NORMAL = 0;
-    var GROUP = 1;
-}
-
-@:enum
-abstract AseBlendmode(Int) from Int
-{
-    var NORMAL = 0;
-    var NULTIPLY = 1;
-    var SCREEN = 2;
-    var OVERLAY = 3;
-    var DARKEN = 4;
-    var LIGHTEN = 5;
-    var COLOR_DODGE = 6;
-    var COLOR_BURN = 7;
-    var HARD_LIGHT = 8;
-    var SOFT_LIGHT = 9;
-    var DIFFERENCE = 10;
-    var EXCLUSION = 11;
-    var HUE = 12;
-    var SATURATION = 13;
-    var COLOR = 14;
-    var LUMINOSITY = 15;
-    var ADDITION = 16;
-    var SUBTRACT = 17;
-    var DIVIDE = 18;
 }
