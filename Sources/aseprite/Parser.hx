@@ -1,15 +1,15 @@
 package aseprite;
 
 import aseprite.Reader;
-import kha.Blob;
+import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.zip.InflateImpl;
 
 class Parser
 {
-    public static function parse(blob :Blob) : Aesprite
+    public static function parse(bytes :Bytes) : Aesprite
     {
-        var reader = new Reader(blob);
+        var reader = new Reader(bytes);
         var header = readHeader(reader);
         var frames = [for(i in 0...header.frames) readFrame(reader)];
         var spr = new Aesprite(header, frames);
@@ -162,7 +162,6 @@ class Parser
         var opacity :Int = reader.getByte();
         reader.seek(3);
         var name :String = reader.getString();
-        trace("COMPLETED readLayer");
         return LAYER(flags, type, childLevel, defaultWidth, defaultHeight, blendMode, opacity, name);
     }
 

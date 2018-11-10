@@ -1,16 +1,16 @@
 package aseprite;
 
-import kha.Blob;
 import haxe.io.BytesInput;
 import haxe.io.Encoding;
+import haxe.io.Bytes;
 
 class Reader
 {
     public var input :BytesInput;
 
-    public function new(blob :Blob) : Void
+    public function new(bytes :Bytes) : Void
     {
-        this.input = new BytesInput(blob.bytes);
+        this.input = new BytesInput(bytes);
         this.input.bigEndian = false;
     }
 
