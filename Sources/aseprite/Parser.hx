@@ -44,7 +44,6 @@ class Parser
             height: height,
             colorDepth: colorDepth,
             flags: flags,
-            speed: speed,
             transparentColor: transparentColor,
             numberOfColors: numberOfColors,
             pixelWidth: pixelWidth,
@@ -65,53 +64,66 @@ class Parser
         var numberOfChunksNew :Int = reader.getDWord();
         var length = numberOfChunksNew == 0 ? numberOfChunksOld : numberOfChunksNew;
 
-        return {
-            bytesLength: bytesLength,
-            numberOfChunksOld: numberOfChunksOld,
-            frameDuration: frameDuration,
-            numberOfChunksNew: numberOfChunksNew,
-            chunks: [for(i in 0...length) getChunk(reader)]
-        };
+        var frame = new Frame(frameDuration);
+
+        for(i in 0...length) {
+            getChunk(frame, reader);
+        }
+
+        return frame;
     }
 
-    static function getChunk(reader :Reader) : Chunk
+    static function getChunk(frame :Frame, reader :Reader) : Void
     {
         var chunkSize = reader.getDWord();
         var chunkType :ChunkType = reader.getWord();
-        return switch chunkType {
-            case CEL_CHUNK: readCel(reader);
+        switch chunkType {
+            case CEL_CHUNK: {
+                frame.cels.push(readCel(reader));
+            }
+
             case CEL_EXTRA_CHUNK: throw "CEL_EXTRA_CHUNK";
-            case COLOR_PROFILE_CHUNK: readColorProfile(reader);
-            case FRAME_TAGS_CHUNK: readFrameTags(reader);
-            case LAYER_CHUNK: readLayer(reader);
+
+            case COLOR_PROFILE_CHUNK: {
+                if(frame.colorProfile != null) {
+                    throw "frame profile is already set";
+                }
+                frame.colorProfile = readColorProfile(reader);
+            }
+
+            case FRAME_TAGS_CHUNK: {
+                if(frame.frameTags != null) {
+                    throw "frame tags are already set";
+                }
+                frame.frameTags = readFrameTags(reader);
+            }
+
+            case LAYER_CHUNK: {
+                frame.layers.push(readLayer(reader));
+            }
+
             case OLD_PALETTE_CHUNK_A: readOldPaletteA(reader);
+
             case OLD_PALETTE_CHUNK_B: throw "OLD_PALETTE_CHUNK_B";
-            case PALETTE_CHUNK: readPalette(reader);
+
+            case PALETTE_CHUNK:{
+                if(frame.palette != null) {
+                    throw "frame palette is already set";
+                }
+                frame.palette = readPalette(reader);
+            }
+
             case PATH_CHUNK: throw "PATH_CHUNK";
+
             case SLICE_CHUNK: throw "SLICE_CHUNK";
+
             case USER_DATA_CHUNK: throw "USER_DATA_CHUNK";
+
             case _: throw ("CHUNK NOT FOUND: " + chunkType);
         }
     }
 
-    static function readFrameTags(reader :Reader) : Chunk
-    {
-        var numberOfTags :Int = reader.getWord();
-        reader.seek(8);
-        for(i in 0...numberOfTags) {
-            var fromFrame = reader.getWord();
-            var toFrame = reader.getWord();
-            var direction :Direction = reader.getByte();
-            reader.seek(8);
-            var colors = reader.getBytes(3);
-            reader.seek(1);
-            var name = reader.getString();
-        }
-
-        return null;
-    }
-
-    static function readColorProfile(reader :Reader) : Chunk
+    static function readColorProfile(reader :Reader) : ColorProfile
     {
         var type :ColorProfileType = reader.getWord();
         var flags :Int = reader.getWord();
@@ -119,12 +131,15 @@ class Parser
         reader.seek(8);
 
         return switch type {
-            case ICC: throw "NOT READY";
-            case _: COLOR_PROFILE(type, flags, gamma, null, null);
+            case ICC: {
+                var length = reader.getWord();
+                {type:type, flags:flags, gamma:gamma, iccData: reader.getBytes(length)};
+            }
+            case _: {type:type, flags:flags, gamma:gamma, iccData: null};
         }
     }
 
-    static function readPalette(reader :Reader) : Chunk
+    static function readPalette(reader :Reader) : Palette
     {
         var paletteSize = reader.getDWord();
         var firstColorIndex = reader.getDWord();
@@ -143,10 +158,10 @@ class Parser
             colors.push(color);
         }
 
-        return PALETTE(paletteSize, firstColorIndex, lastColorIndex, colors);
+        return {firstColorIndex:firstColorIndex, lastColorIndex:lastColorIndex, colors:colors};
     }
 
-    static function readOldPaletteA(reader :Reader) : Chunk
+    static function readOldPaletteA(reader :Reader) : Void
     {
         var numberOfPackets = reader.getWord();
         var packets :Array<Packet> = [];
@@ -157,25 +172,24 @@ class Parser
             var colors = [for(i in 0...numberOfColors) RGB(reader.getByte(), reader.getByte(), reader.getByte())];
             packets.push({entriesToSkip:entriesToSkip, colors: colors});
         }
-
-        return OLD_PALETTE_A(numberOfPackets, packets);
     }
 
-    static function readLayer(reader :Reader) : Chunk
+    static function readLayer(reader :Reader) : Layer
     {
         var flags :Int = reader.getWord();
-        var type :Int = reader.getWord();
+        var type :LayerType = reader.getWord();
         var childLevel :Int = reader.getWord();
         var defaultWidth :Int = reader.getWord();
         var defaultHeight :Int = reader.getWord();
-        var blendMode :Int = reader.getWord();
+        var blendMode :AseBlendmode = reader.getWord();
         var opacity :Int = reader.getByte();
         reader.seek(3);
         var name :String = reader.getString();
-        return LAYER(flags, type, childLevel, defaultWidth, defaultHeight, blendMode, opacity, name);
+
+        return {flags:flags, type:type, childLevel:childLevel, blendMode:blendMode, opacity:opacity, name:name};
     }
 
-    static function readCel(reader :Reader) : Chunk
+    static function readCel(reader :Reader) : Cel
     {
         var layerIndex :Int = reader.getWord();
         var x :Int = reader.getShort();
@@ -197,36 +211,119 @@ class Parser
             case COMPRESSED_IMAGE: {
                 var width = reader.getWord();
                 var height = reader.getWord();
-                var inflatedData = InflateImpl.run(reader.input, width*height);
-                COMPRESSED_DATA(width, height, inflatedData);
+                var data = InflateImpl.run(reader.input, width*height);
+                IMAGE_DATA(width, height, data);
             }
         }
-        return CEL(layerIndex, x, y, opacityLevel, celData);
+        return {layerIndex:layerIndex, x:x, y:y, opacityLevel:opacityLevel, data:celData};
+    }
+
+    static function readFrameTags(reader :Reader) : Array<FrameTag>
+    {
+        var numberOfTags :Int = reader.getWord();
+        reader.seek(8);
+        var frameTags :Array<FrameTag> = [];
+        for(i in 0...numberOfTags) {
+            var fromFrame = reader.getWord();
+            var toFrame = reader.getWord();
+            var direction :Direction = reader.getByte();
+            reader.seek(8);
+            var colors = reader.getBytes(3);
+            reader.seek(1);
+            var name = reader.getString();
+
+            frameTags.push({
+                fromFrame: fromFrame,
+                toFrame: toFrame,
+                direction: direction,
+                colors: colors,
+                name: name
+            });
+        }
+
+        return frameTags;
     }
 }
 
-typedef Frame =
+@:allow(aseprite.Parser)
+class Frame
 {
-    var bytesLength :Int;
-    var numberOfChunksOld :Int;
-    var frameDuration :Int;
-    var numberOfChunksNew :Int;
-    var chunks :Array<Chunk>;
+    public var duration (default, null) :Int;
+    public var colorProfile (default, null):ColorProfile;
+    public var palette (default, null):Palette;
+    public var layers (default, null):Array<Layer>;
+    public var cels (default, null):Array<Cel>;
+    public var frameTags (default, null):Array<FrameTag>;
+
+    public function new(duration :Int) : Void
+    {
+        this.duration = duration;
+        this.layers = [];
+        this.cels = [];
+    }
 }
 
-enum Chunk
+typedef Header =
 {
-    COLOR_PROFILE(type :ColorProfileType, flags :Int, gamma :Float, iccLength :Null<Int>, iccData :Null<Array<Int>>);
-    PALETTE(paletteSize :Int, firstColorIndex :Int, lastColorIndex :Int, colors :Array<PaletteColor>);
-    OLD_PALETTE_A(numberOfPackets :Int, packets :Array<Packet>);
-    LAYER(flags :Int, type :Int, childLevel :Int, defaultWidth :Int, defaultHeight :Int, blendMode :Int, opacity :Int, name :String);
-    CEL(layerIndex :Int, x :Int, y :Int, opacityLevel :Int, data :CelData);
+    var fileSize :Int;
+    var frames :Int;
+    var width :Int;
+    var height :Int;
+    var colorDepth :ColorDepth;
+    var flags :Int;
+    var transparentColor :Int;
+    var numberOfColors :Int;
+    var pixelWidth :Int;
+    var pixelHeight :Int;
+}
+
+typedef FrameTag =
+{
+    var fromFrame :Int;
+    var toFrame :Int;
+    var direction :Direction;
+    var colors :Array<Int>;
+    var name :String;
+}
+
+typedef ColorProfile =
+{
+    var type :ColorProfileType;
+    var flags :Int;
+    var gamma :Float;
+    var iccData :Array<Int>;
+}
+
+typedef Palette =
+{
+    var firstColorIndex :Int;
+    var lastColorIndex :Int;
+    var colors :Array<PaletteColor>;
+}
+
+typedef Layer =
+{
+    var flags :Int;
+    var type :LayerType;
+    var childLevel :Int;
+    var blendMode :AseBlendmode;
+    var opacity :Int;
+    var name :String;
+}
+
+typedef Cel =
+{
+    var layerIndex :Int;
+    var x :Int;
+    var y :Int;
+    var opacityLevel :Int;
+    var data :CelData;
 }
 
 enum CelData {
     RAW_DATA(width :Int, height :Int, pixels :Int);
     LINKED_DATA(linkedFramePosition :Int);
-    COMPRESSED_DATA(width :Int, height :Int, inflatedData :haxe.io.Bytes);
+    IMAGE_DATA(width :Int, height :Int, data :haxe.io.Bytes);
 }
 
 enum PaletteColor
@@ -240,28 +337,6 @@ typedef Packet =
 {
     var entriesToSkip :Int;
     var colors :Array<PaletteColor>;
-}
-
-typedef ChunkData =
-{
-    var size :Int;
-    var type :ChunkType;
-    var data :Array<Chunk>;
-}
-
-typedef Header =
-{
-    var fileSize :Int;
-    var frames :Int;
-    var width :Int;
-    var height :Int;
-    var colorDepth :ColorDepth;
-    var flags :Int;
-    var speed :Int;
-    var transparentColor :Int;
-    var numberOfColors :Int;
-    var pixelWidth :Int;
-    var pixelHeight :Int;
 }
 
 @:enum
@@ -311,4 +386,35 @@ abstract Direction(Int) from Int
     var FORWARD = 0;
     var REVERSE = 1;
     var PING_PONG = 2;
+}
+
+@:enum
+abstract LayerType(Int) from Int
+{
+    var NORMAL = 0;
+    var GROUP = 1;
+}
+
+@:enum
+abstract AseBlendmode(Int) from Int
+{
+    var NORMAL = 0;
+    var NULTIPLY = 1;
+    var SCREEN = 2;
+    var OVERLAY = 3;
+    var DARKEN = 4;
+    var LIGHTEN = 5;
+    var COLOR_DODGE = 6;
+    var COLOR_BURN = 7;
+    var HARD_LIGHT = 8;
+    var SOFT_LIGHT = 9;
+    var DIFFERENCE = 10;
+    var EXCLUSION = 11;
+    var HUE = 12;
+    var SATURATION = 13;
+    var COLOR = 14;
+    var LUMINOSITY = 15;
+    var ADDITION = 16;
+    var SUBTRACT = 17;
+    var DIVIDE = 18;
 }
