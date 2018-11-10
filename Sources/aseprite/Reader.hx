@@ -58,7 +58,7 @@ class Reader
         for(i in 0...n) this.getByte();
     }
 
-    public function getString() : String
+    public inline function getString() : String
     {
         return input.readString(getWord(), Encoding.UTF8);
     }

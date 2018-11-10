@@ -7,14 +7,12 @@ import haxe.zip.InflateImpl;
 
 class Parser
 {
-    public static function parse(bytes :Bytes) : Aesprite
+    public static function parse(bytes :Bytes) : Aseprite
     {
         var reader = new Reader(bytes);
         var header = readHeader(reader);
         var frames = [for(i in 0...header.frames) readFrame(reader)];
-        var spr = new Aesprite(header, frames);
-        trace(spr);
-        return spr;
+        return new Aseprite(header, frames);
     }
 
     static function readHeader(reader :Reader) : Header
@@ -66,27 +64,25 @@ class Parser
         reader.seek(2);
         var numberOfChunksNew :Int = reader.getDWord();
         var length = numberOfChunksNew == 0 ? numberOfChunksOld : numberOfChunksNew;
-        trace("Chunk length: " + length);
 
         return {
             bytesLength: bytesLength,
             numberOfChunksOld: numberOfChunksOld,
             frameDuration: frameDuration,
             numberOfChunksNew: numberOfChunksNew,
-            chunks: [for(i in 0...length) getChunk(i, reader)]
+            chunks: [for(i in 0...length) getChunk(reader)]
         };
     }
 
-    static function getChunk(index :Int, reader :Reader) : Chunk
+    static function getChunk(reader :Reader) : Chunk
     {
         var chunkSize = reader.getDWord();
         var chunkType :ChunkType = reader.getWord();
-        trace("Chunk: " + (index+1));
         return switch chunkType {
             case CEL_CHUNK: readCel(reader);
             case CEL_EXTRA_CHUNK: throw "CEL_EXTRA_CHUNK";
             case COLOR_PROFILE_CHUNK: readColorProfile(reader);
-            case FRAME_TAGS_CHUNK: throw "FRAME_TAGS_CHUNK";
+            case FRAME_TAGS_CHUNK: readFrameTags(reader);
             case LAYER_CHUNK: readLayer(reader);
             case OLD_PALETTE_CHUNK_A: readOldPaletteA(reader);
             case OLD_PALETTE_CHUNK_B: throw "OLD_PALETTE_CHUNK_B";
@@ -98,6 +94,23 @@ class Parser
         }
     }
 
+    static function readFrameTags(reader :Reader) : Chunk
+    {
+        var numberOfTags :Int = reader.getWord();
+        reader.seek(8);
+        for(i in 0...numberOfTags) {
+            var fromFrame = reader.getWord();
+            var toFrame = reader.getWord();
+            var direction :Direction = reader.getByte();
+            reader.seek(8);
+            var colors = reader.getBytes(3);
+            reader.seek(1);
+            var name = reader.getString();
+        }
+
+        return null;
+    }
+
     static function readColorProfile(reader :Reader) : Chunk
     {
         var type :ColorProfileType = reader.getWord();
@@ -105,7 +118,6 @@ class Parser
         var gamma :Float = reader.getFixed();
         reader.seek(8);
 
-        trace("COMPLETED readColorProfile");
         return switch type {
             case ICC: throw "NOT READY";
             case _: COLOR_PROFILE(type, flags, gamma, null, null);
@@ -131,7 +143,6 @@ class Parser
             colors.push(color);
         }
 
-        trace("COMPLETED readPalette");
         return PALETTE(paletteSize, firstColorIndex, lastColorIndex, colors);
     }
 
@@ -147,7 +158,6 @@ class Parser
             packets.push({entriesToSkip:entriesToSkip, colors: colors});
         }
 
-        trace("COMPLETED readOldPaletteA");
         return OLD_PALETTE_A(numberOfPackets, packets);
     }
 
@@ -191,21 +201,17 @@ class Parser
                 COMPRESSED_DATA(width, height, inflatedData);
             }
         }
-        trace("COMPLETED readCel");
         return CEL(layerIndex, x, y, opacityLevel, celData);
     }
 }
 
-class Aesprite
+typedef Frame =
 {
-    public var header :Header;
-    public var frames :Array<Frame>;
-
-    public function new(header :Header, frames :Array<Frame>) : Void
-    {
-        this.header = header;
-        this.frames = frames;
-    }
+    var bytesLength :Int;
+    var numberOfChunksOld :Int;
+    var frameDuration :Int;
+    var numberOfChunksNew :Int;
+    var chunks :Array<Chunk>;
 }
 
 enum Chunk
@@ -241,15 +247,6 @@ typedef ChunkData =
     var size :Int;
     var type :ChunkType;
     var data :Array<Chunk>;
-}
-
-typedef Frame =
-{
-    var bytesLength :Int;
-    var numberOfChunksOld :Int;
-    var frameDuration :Int;
-    var numberOfChunksNew :Int;
-    var chunks :Array<Chunk>;
 }
 
 typedef Header =
@@ -306,4 +303,12 @@ abstract CelType(Int) from Int
     var RAW = 0;
     var LINKED = 1;
     var COMPRESSED_IMAGE = 2;
+}
+
+@:enum 
+abstract Direction(Int) from Int
+{
+    var FORWARD = 0;
+    var REVERSE = 1;
+    var PING_PONG = 2;
 }
