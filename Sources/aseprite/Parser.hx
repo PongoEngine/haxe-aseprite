@@ -50,7 +50,7 @@ class Parser
         var numberOfChunksNew :Int = reader.getDWord();
         var length = numberOfChunksNew == 0 ? numberOfChunksOld : numberOfChunksNew;
 
-        var frame = new Frame(frameDuration);
+        var frame = new Frame(frameDuration/1000);
 
         for(i in 0...length) {
             getChunk(frame, reader);

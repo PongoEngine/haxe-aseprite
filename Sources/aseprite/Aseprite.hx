@@ -41,14 +41,14 @@ class Header
 @:allow(aseprite.Parser)
 class Frame<Texture>
 {
-    public var duration (default, null) :Int;
+    public var duration (default, null) :Float;
     public var colorProfile (default, null):ColorProfile;
     public var palette (default, null):Palette;
     public var layers (default, null):Array<Layer>;
     public var cels (default, null):Array<Cel<Texture>>;
     public var frameTags (default, null):Array<FrameTag>;
 
-    public function new(duration :Int) : Void
+    public function new(duration :Float) : Void
     {
         this.duration = duration;
         this.layers = [];
