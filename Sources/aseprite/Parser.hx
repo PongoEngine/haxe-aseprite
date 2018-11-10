@@ -8,7 +8,7 @@ import aseprite.Aseprite;
 
 class Parser
 {
-    public static function parse(bytes :Bytes) : Aseprite
+    public static function parse<Texture>(bytes :Bytes) : Aseprite<Texture>
     {
         var reader = new Reader(bytes);
         var header = readHeader(reader);
@@ -39,7 +39,7 @@ class Parser
         return new Header(frames, width, height, colorDepth, flags, transparentColor, numberOfColors, pixelWidth, pixelHeight);
     }
 
-    static function readFrame(reader :Reader) : Frame
+    static function readFrame<Texture>(reader :Reader) : Frame<Texture>
     {
         var bytesLength :Int = reader.getDWord();
         var magicNumber :Int = reader.getWord();
@@ -59,7 +59,7 @@ class Parser
         return frame;
     }
 
-    static function getChunk(frame :Frame, reader :Reader) : Void
+    static function getChunk<Texture>(frame :Frame<Texture>, reader :Reader) : Void
     {
         var chunkSize = reader.getDWord();
         var chunkType :ChunkType = reader.getWord();
@@ -67,7 +67,8 @@ class Parser
             case CEL_CHUNK:
                 frame.cels.push(readCel(reader));
 
-            case CEL_EXTRA_CHUNK: assert(false, "CEL_EXTRA_CHUNK");
+            case CEL_EXTRA_CHUNK: 
+                assert(false, "CEL_EXTRA_CHUNK");
 
             case COLOR_PROFILE_CHUNK:
                 assert(frame.colorProfile == null, "frame profile is already set");
@@ -80,21 +81,27 @@ class Parser
             case LAYER_CHUNK:
                 frame.layers.push(readLayer(reader));
 
-            case OLD_PALETTE_CHUNK_A: readOldPaletteA(reader);
+            case OLD_PALETTE_CHUNK_A: 
+                readOldPaletteA(reader);
 
-            case OLD_PALETTE_CHUNK_B: assert(false, "OLD_PALETTE_CHUNK_B");
+            case OLD_PALETTE_CHUNK_B: 
+                assert(false, "OLD_PALETTE_CHUNK_B");
 
             case PALETTE_CHUNK:
                 assert(frame.palette == null, "frame palette is already set");
                 frame.palette = readPalette(reader);
 
-            case PATH_CHUNK: assert(false, "PATH_CHUNK");
+            case PATH_CHUNK: 
+                assert(false, "PATH_CHUNK");
 
-            case SLICE_CHUNK: assert(false, "SLICE_CHUNK");
+            case SLICE_CHUNK: 
+                assert(false, "SLICE_CHUNK");
 
-            case USER_DATA_CHUNK: assert(false, "USER_DATA_CHUNK");
+            case USER_DATA_CHUNK: 
+                assert(false, "USER_DATA_CHUNK");
 
-            case _: assert(false, "CHUNK NOT FOUND: " + chunkType);
+            case _: 
+                assert(false, "CHUNK NOT FOUND: " + chunkType);
         }
     }
 
@@ -164,7 +171,7 @@ class Parser
         return {flags:flags, type:type, childLevel:childLevel, blendMode:blendMode, opacity:opacity, name:name};
     }
 
-    static function readCel(reader :Reader) : Cel
+    static function readCel<Texture>(reader :Reader) : Cel<Texture>
     {
         var layerIndex :Int = reader.getWord();
         var x :Int = reader.getShort();

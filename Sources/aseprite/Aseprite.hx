@@ -2,12 +2,12 @@ package aseprite;
 
 // import aseprite.Parser;
 
-class Aseprite
+class Aseprite<Texture>
 {
     public var header :Header;
-    public var frames :Array<Frame>;
+    public var frames :Array<Frame<Texture>>;
 
-    public function new(header :Header, frames :Array<Frame>) : Void
+    public function new(header :Header, frames :Array<Frame<Texture>>) : Void
     {
         this.header = header;
         this.frames = frames;
@@ -41,13 +41,13 @@ class Header
 }
 
 @:allow(aseprite.Parser)
-class Frame
+class Frame<Texture>
 {
     public var duration (default, null) :Int;
     public var colorProfile (default, null):ColorProfile;
     public var palette (default, null):Palette;
     public var layers (default, null):Array<Layer>;
-    public var cels (default, null):Array<Cel>;
+    public var cels (default, null):Array<Cel<Texture>>;
     public var frameTags (default, null):Array<FrameTag>;
 
     public function new(duration :Int) : Void
@@ -92,13 +92,14 @@ typedef Layer =
     var name (default, null):String;
 }
 
-typedef Cel =
+typedef Cel<Texture> =
 {
     var layerIndex (default, null):Int;
     var x (default, null):Int;
     var y (default, null):Int;
     var opacityLevel (default, null):Int;
     var data (default, null):CelData;
+    @:optional var texture :Texture;
 }
 
 enum CelData {
