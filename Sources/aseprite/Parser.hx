@@ -30,7 +30,7 @@ class Parser
         var pixelHeight :Int = reader.getByte();
         reader.seek(92);
 
-        var sprite = new Aseprite(width, height, colorDepth, transparentColor, numberOfColors, pixelWidth, pixelHeight);
+        var sprite = new Aseprite(width, height, colorDepth, transparentColor, numberOfColors, pixelWidth, pixelHeight, flags);
         for(i in 0...frames) {
             sprite.frames.push(readFrame(sprite, reader));
         }
@@ -77,7 +77,7 @@ class Parser
                 sprite.frameTags = readFrameTags(reader);
 
             case LAYER_CHUNK:
-                frame.layers.push(readLayer(reader));
+                sprite.layers.push(readLayer(reader));
 
             case OLD_PALETTE_CHUNK_A: 
                 readOldPaletteA(reader);

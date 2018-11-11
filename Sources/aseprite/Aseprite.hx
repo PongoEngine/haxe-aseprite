@@ -10,12 +10,14 @@ class Aseprite<Texture>
     public var numberOfColors (default, null):Int;
     public var pixelWidth (default, null):Int;
     public var pixelHeight (default, null):Int;
-    public var frameTags (default, null):Array<FrameTag>;
-    public var frames :Array<Frame<Texture>>;
     public var colorProfile (default, null):ColorProfile;
     public var palette (default, null):Palette;
+    public var frames :Array<Frame<Texture>>;
+    public var frameTags (default, null):Array<FrameTag>;
+    public var layers (default, null):Array<Layer>;
+    public var flags (default, null):Int;
 
-    public function new(width :Int, height :Int, colorDepth :Int, transparentColor :Int, numberOfColors :Int, pixelWidth :Int, pixelHeight :Int) : Void
+    public function new(width :Int, height :Int, colorDepth :Int, transparentColor :Int, numberOfColors :Int, pixelWidth :Int, pixelHeight :Int, flags :Int) : Void
     {
         this.width = width;
         this.height = height;
@@ -25,19 +27,19 @@ class Aseprite<Texture>
         this.pixelWidth = pixelWidth;
         this.pixelHeight = pixelHeight;
         this.frames = [];
+        this.layers = [];
+        this.flags = flags;
     }
 }
 
 class Frame<Texture>
 {
     public var duration (default, null) :Float;
-    public var layers (default, null):Array<Layer>;
     public var cels (default, null):Array<Cel<Texture>>;
 
     public function new(duration :Float) : Void
     {
         this.duration = duration;
-        this.layers = [];
         this.cels = [];
     }
 }
