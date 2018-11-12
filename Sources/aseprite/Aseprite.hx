@@ -15,9 +15,9 @@ class Aseprite<Texture>
     public var frames :Array<Frame<Texture>>;
     public var frameTags (default, null):Array<FrameTag>;
     public var layers (default, null):Array<Layer>;
-    public var flags (default, null):Int;
+    public var hasValidOpacity (default, null):Bool;
 
-    public function new(width :Int, height :Int, colorDepth :Int, transparentColor :Int, numberOfColors :Int, pixelWidth :Int, pixelHeight :Int, flags :Int) : Void
+    public function new(width :Int, height :Int, colorDepth :Int, transparentColor :Int, numberOfColors :Int, pixelWidth :Int, pixelHeight :Int, hasValidOpacity :Bool) : Void
     {
         this.width = width;
         this.height = height;
@@ -28,7 +28,7 @@ class Aseprite<Texture>
         this.pixelHeight = pixelHeight;
         this.frames = [];
         this.layers = [];
-        this.flags = flags;
+        this.hasValidOpacity = hasValidOpacity;
     }
 }
 
@@ -56,7 +56,7 @@ typedef FrameTag =
 typedef ColorProfile =
 {
     var type (default, null):ColorProfileType;
-    var flags (default, null):Int;
+    var useFixedGamma (default, null):Bool;
     var gamma (default, null):Float;
     var iccData (default, null):Array<Int>;
 }
@@ -70,12 +70,12 @@ typedef Palette =
 
 typedef Layer =
 {
-    var flags (default, null):Int;
     var type (default, null):LayerType;
     var childLevel (default, null):Int;
     var blendMode (default, null):AseBlendmode;
-    var opacity (default, null):Int;
+    var opacity (default, null):Float;
     var name (default, null):String;
+    var visible (default, null):Bool;
 }
 
 typedef Cel<Texture> =

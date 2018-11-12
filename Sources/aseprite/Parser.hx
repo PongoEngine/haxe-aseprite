@@ -29,8 +29,9 @@ class Parser
         var pixelWidth :Int = reader.getByte();
         var pixelHeight :Int = reader.getByte();
         reader.seek(92);
+        var hasValidOpacity = flags & 1  == 1;
 
-        var sprite = new Aseprite(width, height, colorDepth, transparentColor, numberOfColors, pixelWidth, pixelHeight, flags);
+        var sprite = new Aseprite(width, height, colorDepth, transparentColor, numberOfColors, pixelWidth, pixelHeight, hasValidOpacity);
         for(i in 0...frames) {
             sprite.frames.push(readFrame(sprite, reader));
         }
@@ -109,13 +110,14 @@ class Parser
         var flags :Int = reader.getWord();
         var gamma :Float = reader.getFixed();
         reader.seek(8);
+        var useFixedGamma = flags & 1  == 1;
 
         return switch type {
             case ICC: {
                 var length = reader.getWord();
-                {type:type, flags:flags, gamma:gamma, iccData: reader.getBytes(length)};
+                {type:type, useFixedGamma:useFixedGamma, gamma:gamma, iccData: reader.getBytes(length)};
             }
-            case _: {type:type, flags:flags, gamma:gamma, iccData: null};
+            case _: {type:type, useFixedGamma:useFixedGamma, gamma:gamma, iccData: null};
         }
     }
 
@@ -162,11 +164,11 @@ class Parser
         var defaultWidth :Int = reader.getWord();
         var defaultHeight :Int = reader.getWord();
         var blendMode :AseBlendmode = reader.getWord();
-        var opacity :Int = reader.getByte();
+        var opacity :Float = reader.getByte() / 255;
         reader.seek(3);
         var name :String = reader.getString();
-
-        return {flags:flags, type:type, childLevel:childLevel, blendMode:blendMode, opacity:opacity, name:name};
+        var visible = flags & 1  == 1;
+        return {type:type, childLevel:childLevel, blendMode:blendMode, opacity:opacity, name:name, visible: visible};
     }
 
     static function readCel<Texture>(reader :Reader) : Cel<Texture>
