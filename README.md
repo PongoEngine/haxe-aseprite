@@ -5,9 +5,11 @@ haxe-aseprite was created for the GitHub GameOff. I've tested it for my needs ho
 
 ## Example Usage
 ```haxe
-var file = Parser.parse(assetpack.getFile("mockup").toBytes(), function(bytes :Bytes, width :Int, height :Int, colorDepth :ColorDepth) {
+function createTexture(bytes :Bytes, width :Int, height :Int, colorDepth :ColorDepth) {
     return Texture.fromBytes(bytes, width, height, colorDepth);
-});
+}
+
+var file = Parser.parse(assetpack.getFile("mockup").toBytes(), createTexture);
 ```
 
 Chunk types tested -
