@@ -27,4 +27,4 @@ Chunk types tested -
 - [ ] USER_DATA_CHUNK
 - [ ] SLICE_CHUNK
 
-If you have a file that is not parsing properly or has additional chunk types not tested message me or create pull request.
+If you have a file that is not parsing properly or has additional chunk types not tested message me or create a pull request.
