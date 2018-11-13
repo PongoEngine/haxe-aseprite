@@ -9,7 +9,7 @@ function createTexture(bytes :Bytes, width :Int, height :Int, colorDepth :ColorD
     return Texture.fromBytes(bytes, width, height, colorDepth);
 }
 
-var file = Parser.parse(assetpack.getFile("mockup").toBytes(), createTexture);
+var file = Parser.parse(assets.getFile("animation.aseprite").toBytes(), createTexture);
 ```
 
 Chunk types tested -
