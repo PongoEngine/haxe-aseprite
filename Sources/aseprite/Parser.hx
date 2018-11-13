@@ -8,7 +8,7 @@ import aseprite.Aseprite;
 
 class Parser
 {
-    public static function parse<Texture>(bytes :Bytes) : Aseprite<Texture>
+    public static function parse<Texture>(bytes :Bytes, createTexture :Bytes -> Int -> Int -> ColorDepth -> Texture) : Aseprite<Texture>
     {
         var reader = new Reader(bytes);
 
@@ -33,12 +33,12 @@ class Parser
 
         var sprite = new Aseprite(width, height, colorDepth, transparentColor, numberOfColors, pixelWidth, pixelHeight, hasValidOpacity);
         for(i in 0...frames) {
-            sprite.frames.push(readFrame(sprite, reader));
+            sprite.frames.push(readFrame(sprite, reader, createTexture));
         }
         return sprite;
     }
 
-    static function readFrame<Texture>(sprite :Aseprite<Texture>, reader :Reader) : Frame<Texture>
+    static function readFrame<Texture>(sprite :Aseprite<Texture>, reader :Reader, createTexture :Bytes -> Int -> Int -> ColorDepth -> Texture) : Frame<Texture>
     {
         var bytesLength :Int = reader.getDWord();
         var magicNumber :Int = reader.getWord();
@@ -52,19 +52,19 @@ class Parser
         var frame = new Frame(frameDuration/1000);
 
         for(i in 0...length) {
-            getChunk(sprite, frame, reader);
+            getChunk(sprite, frame, reader, createTexture);
         }
 
         return frame;
     }
 
-    static function getChunk<Texture>(sprite :Aseprite<Texture>, frame :Frame<Texture>, reader :Reader) : Void
+    static function getChunk<Texture>(sprite :Aseprite<Texture>, frame :Frame<Texture>, reader :Reader, createTexture :Bytes -> Int -> Int -> ColorDepth -> Texture) : Void
     {
         var chunkSize = reader.getDWord();
         var chunkType :ChunkType = reader.getWord();
         switch chunkType {
             case CEL_CHUNK:
-                frame.cels.push(readCel(reader));
+                frame.cels.push(readCel(sprite, reader, createTexture));
 
             case CEL_EXTRA_CHUNK: 
                 assert(false, "CEL_EXTRA_CHUNK");
@@ -171,7 +171,7 @@ class Parser
         return {type:type, childLevel:childLevel, blendMode:blendMode, opacity:opacity, name:name, visible: visible};
     }
 
-    static function readCel<Texture>(reader :Reader) : Cel<Texture>
+    static function readCel<Texture>(sprite :Aseprite<Texture>, reader :Reader, createTexture :Bytes -> Int -> Int -> ColorDepth -> Texture) : Cel<Texture>
     {
         var layerIndex :Int = reader.getWord();
         var x :Int = reader.getShort();
@@ -194,7 +194,7 @@ class Parser
                 var width = reader.getWord();
                 var height = reader.getWord();
                 var data = InflateImpl.run(reader.input, width*height);
-                IMAGE_DATA(width, height, data);
+                IMAGE_DATA(width, height, createTexture(data, width, height, sprite.colorDepth));
             }
         }
         return {layerIndex:layerIndex, x:x, y:y, opacityLevel:opacityLevel, data:celData};

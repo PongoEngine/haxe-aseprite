@@ -84,14 +84,14 @@ typedef Cel<Texture> =
     var x (default, null):Int;
     var y (default, null):Int;
     var opacityLevel (default, null):Int;
-    var data (default, null):CelData;
+    var data (default, null):CelData<Texture>;
     @:optional var texture :Texture;
 }
 
-enum CelData {
+enum CelData<Texture> {
     RAW_DATA(width :Int, height :Int, pixels :Int);
     LINKED_DATA(linkedFramePosition :Int);
-    IMAGE_DATA(width :Int, height :Int, data :haxe.io.Bytes);
+    IMAGE_DATA(width :Int, height :Int, texture :Texture);
 }
 
 enum PaletteColor
