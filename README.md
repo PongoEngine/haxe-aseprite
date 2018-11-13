@@ -1,8 +1,28 @@
 # haxe-aseprite
 Haxe parser for .ase and .aseprite files.
 
-This project was built for the Github Game jam. As it stands it has basic functionality for my needs HOWEVER! I would love to make the parser valid for all .aseprite files.
+haxe-aseprite was created for the GitHub GameOff. I've tested it for my needs however I would love for this to be feature complete. If you have access to aseprite files that break the parser send them my way!
 
-So please please message me or request a pull request!
+## Example Usage
+```haxe
+var file = Parser.parse(assetpack.getFile("mockup").toBytes(), function(bytes :Bytes, width :Int, height :Int, colorDepth :ColorDepth) {
+    return Texture.fromBytes(bytes, width, height, colorDepth);
+});
+```
 
-Also if you're having any problems getting this going let me know about your project. Maybe we can make a tutorial together. Until then, happy coding. ^_^
+Chunk types tested -
+
+- [x] OLD_PALETTE_CHUNK_A
+- [ ] OLD_PALETTE_CHUNK_B
+- [x] LAYER_CHUNK
+- [x] CEL_CHUNK
+- [ ] CEL_EXTRA_CHUNK
+- [x] COLOR_PROFILE_CHUNK
+- [ ] MASK_CHUNK
+- [ ] PATH_CHUNK
+- [x] FRAME_TAGS_CHUNK
+- [x] PALETTE_CHUNK
+- [ ] USER_DATA_CHUNK
+- [ ] SLICE_CHUNK
+
+If you have a file that is not parsing properly or has additional chunk types not tested message me or create pull request.

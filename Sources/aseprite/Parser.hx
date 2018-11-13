@@ -80,6 +80,9 @@ class Parser
             case LAYER_CHUNK:
                 sprite.layers.push(readLayer(reader));
 
+            case MASK_CHUNK:
+                assert(false, "MASK_CHUNK");
+
             case OLD_PALETTE_CHUNK_A: 
                 readOldPaletteA(reader);
 
