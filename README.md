@@ -13,7 +13,7 @@ function createTexture(bytes :Bytes, width :Int, height :Int, colorDepth :ColorD
 
 /**
  * The Parser.parse has two parameters. The first is expecting a 
- * bytes representation of an Aseprite file. The second needs a callback
+ * bytes representation of an Aseprite file. The second expects a callback
  * function that will create a texture for your specific framework.
  */
 var file = Parser.parse(assets.getFile("animation.aseprite").toBytes(), createTexture);
