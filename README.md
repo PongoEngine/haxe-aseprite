@@ -3,7 +3,7 @@ Haxe parser for .ase and .aseprite files.
 
 haxe-aseprite was created for the GitHub GameOff. I've tested it for my needs however I would love for this to be feature complete. If you have access to aseprite files that break the parser send them my way!
 
-The goal of this parser is to be concice and framework agnostic while being easily adaptable to its target environment.
+The goal of this parser is to be concice, framework agnostic, and easy to use.
 
 ## Example Usage
 ```haxe
