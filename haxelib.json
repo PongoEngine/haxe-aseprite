@@ -11,5 +11,5 @@
   "version": "1.0.0",
   "classPath": "Sources",
   "releasenote": "haxe-aseprite was created for the GitHub GameOff. I've tested it for my needs however I would love for this to be feature complete. If you have access to aseprite files that break the parser send them my way!",
-  "contributors": ["PongoEngine"]
+  "contributors": ["Jeremy"]
 }
